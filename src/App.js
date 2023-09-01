@@ -1,47 +1,59 @@
 import { Component } from 'react';
-import logo from './logo.svg';
+import CardList from './components/card-list/card-list-component.jsx'
+import SearchBox from './components/search-box/search-box.component.jsx'
 import './App.css';
 
 class App extends Component {
   constructor() {
     super();
-
+    // Set the initial state (empty)
     this.state = {
-      name: { firstName: 'Robert', lastName: 'Trump' },
-      company: 'ZTM'
+      monsters: [],
+      searchField: ''
     };
   }
 
+  componentDidMount() {
+    fetch('https://jsonplaceholder.typicode.com/users')
+      .then((response) => response.json())
+      .then((users) =>
+        this.setState(
+          () => {
+            return { monsters: users };
+          })
+      );
+  }
+
+  // This func var was moved out of the render return for optimization
+  // The function is only built once (initialized)
+  onSearchChange = (event) => {
+    const searchField = event.target.value.toLocaleLowerCase(); // For string matching
+    this.setState(() => {
+      return { searchField };
+    });
+  }
+
   render() {
+    // To reduce repetition of 'this.state'
+    const { monsters, searchField } = this.state; 
+    // To reduce repetition of 'this'
+    const { onSearchChange } = this;
+    const filteredMonsters = monsters.filter((monster) => {
+      return monster.name.toLocaleLowerCase().includes(searchField);
+    });
+
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Hi {this.state.name.firstName} {this.state.name.lastName}, 
-            I work at {this.state.company}
-          </p>
-          <button onClick={() => { // Because a function is used, the state will for sure
-            this.setState(() => {  // update before the 'console.log(this.state)' line
-             return {
-              name: {firstName: 'Timmy', lastName: 'Little' },
-             } 
-            }, () => {
-              console.log(this.state); // This is optional, just to see 
-            });
-          }}
-          >Change name</button>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+      <h1 className="app-title">Monsters Rolodex</h1>
+        <SearchBox 
+          onChangeHandler={onSearchChange}
+          placeholder="search monsters"
+          className="monsters-search-box"
+        />
+        <CardList monsters={filteredMonsters} />
       </div>
     );
   }
 }
+
 export default App;
